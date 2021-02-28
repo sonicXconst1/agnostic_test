@@ -17,6 +17,18 @@ impl Merchant {
             accountant
         }
     }
+
+    pub fn with_custom(
+        accountant: std::sync::Arc<dyn agnostic::market::Accountant>,
+        sniffer: std::sync::Arc<dyn agnostic::market::Sniffer>,
+        trader: std::sync::Arc<dyn agnostic::market::Trader>,
+    ) -> Merchant {
+        Merchant {
+            accountant,
+            sniffer,
+            trader,
+        }
+    }
 }
 
 impl Default for Merchant {
