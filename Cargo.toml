@@ -8,4 +8,5 @@ edition = "2018"
 
 [dependencies]
 hyper = { version = "*", features=["client", "tcp"] }
+log = { version = "0.*" }
 agnostic = { git = "https://github.com/sonicxconst1/agnostic.git", branch = "master" }
