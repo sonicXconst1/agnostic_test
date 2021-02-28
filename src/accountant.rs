@@ -1,4 +1,21 @@
+pub struct Balance {
+    pub first_coin_amount: f64,
+    pub second_coin_amount: f64,
+}
+
 pub struct Accountant {
+    balance: Balance
+}
+
+impl Default for Accountant {
+    fn default() -> Accountant {
+        Accountant {
+            balance: Balance {
+                first_coin_amount: 10f64,
+                second_coin_amount: 10f64,
+            },
+        }
+    }
 }
 
 impl agnostic::market::Accountant for Accountant {
@@ -6,11 +23,12 @@ impl agnostic::market::Accountant for Accountant {
         &self,
         coin: agnostic::trading_pair::Coin
     ) -> agnostic::market::Future<Result<agnostic::currency::Currency, String>> {
+        let amount = self.balance.first_coin_amount;
         Box::pin(async move {
             Ok(agnostic::currency::Currency {
                 coin,
-                held: 2f64,
-                amount: 2f64,
+                held: amount,
+                amount,
             })
         })
     }
@@ -20,17 +38,21 @@ impl agnostic::market::Accountant for Accountant {
         first_coin: agnostic::trading_pair::Coin,
         second_coin: agnostic::trading_pair::Coin,
     ) -> agnostic::market::Future<Result<(agnostic::currency::Currency, agnostic::currency::Currency), String>> {
+        let (first_coin_amount, second_coin_amount) = (
+            self.balance.first_coin_amount,
+            self.balance.second_coin_amount,
+        );
         Box::pin(async move {
             Ok((
                 agnostic::currency::Currency {
                     coin: first_coin,
-                    held: 2f64,
-                    amount: 2f64,
+                    held: first_coin_amount,
+                    amount: first_coin_amount,
                 },
                 agnostic::currency::Currency {
                     coin: second_coin,
-                    held: 4f64,
-                    amount: 4f64,
+                    held: second_coin_amount,
+                    amount: second_coin_amount,
                 },
             ))
         })
