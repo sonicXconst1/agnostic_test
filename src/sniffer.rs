@@ -48,20 +48,6 @@ impl agnostic::market::Sniffer for Sniffer {
         })
     }
 
-    fn the_best_order(&self, trading_pair: agnostic::trading_pair::TradingPair) -> agnostic::market::Future<Result<agnostic::order::Order, String>> {
-        let first_order = self.orders.get(0).map(|order| order.clone());
-        Box::pin(async move {
-            match first_order {
-                Some(order) => Ok(agnostic::order::Order {
-                    trading_pair: trading_pair.clone(),
-                    price: order.price,
-                    amount: order.amount,
-                }),
-                None => Err("0 orders on the market".to_owned()),
-            }
-        })
-    }
-
     fn get_my_orders(
         &self,
         trading_pair: agnostic::trading_pair::TradingPair,
