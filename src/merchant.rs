@@ -42,8 +42,6 @@ impl Default for Merchant {
 }
 
 impl agnostic::merchant::Merchant for Merchant {
-    const ID: u8 = 0;
-
     fn accountant(&self) -> std::sync::Arc<dyn agnostic::market::Accountant> {
         self.accountant.clone()
     }
