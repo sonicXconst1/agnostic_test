@@ -10,3 +10,7 @@ edition = "2018"
 hyper = { version = "*", features=["client", "tcp"] }
 log = { version = "0.*" }
 agnostic = { git = "https://github.com/sonicxconst1/agnostic.git", branch = "master" }
+utils = { git = "https://github.com/sonicxconst1/utils.git", branch = "master" }
+
+[dev-dependencies]
+tokio-test = { version = "*" }
