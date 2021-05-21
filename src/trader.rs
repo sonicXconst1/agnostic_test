@@ -3,8 +3,9 @@ use agnostic::order::{Order, OrderWithId};
 use agnostic::market;
 use agnostic::trading_pair::Target;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Trader {
+    pub created_orders: Vec<Trade>,
 }
 
 impl agnostic::market::Trader for Trader {
@@ -34,5 +35,38 @@ impl agnostic::market::Trader for Trader {
             log::debug!("Deleting order with id: {:#?}", id);
             Ok(())
         })
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct TradesLogger {
+    trader: Trader,
+    pub trades: Vec<Trade>
+}
+
+impl TradesLogger {
+    pub fn new(trader: Trader) -> Self {
+        TradesLogger {
+            trader,
+            ..Default::default()
+        }
+    }
+
+    pub async fn create_order(&mut self, order: Order) {
+    }
+}
+
+impl agnostic::market::Trader for TradesLogger {
+    fn create_order(&self, order: Order) -> market::Future<Result<Trade, String>> {
+        let result = self.trader.create_order(order);
+        let result = async move {
+            let s = result.await;
+            s
+        };
+        Box::pin(result)
+    }
+
+    fn delete_order(&self, id: &str) -> market::Future<Result<(), String>> {
+        todo!()
     }
 }
