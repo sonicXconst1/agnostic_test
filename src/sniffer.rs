@@ -11,6 +11,28 @@ pub struct Sniffer {
     pub buy_orders: Vec<Order>
 }
 
+impl Default for Sniffer {
+    fn default() -> Sniffer {
+        let base_price = 0.5;
+        let price_step = 0.001;
+        let orders_count = 10;
+        let sell_stock_generator = StockGenerator::new(
+            Side::Sell,
+            base_price + price_step,
+            price_step,
+            orders_count);
+        let buy_stock_generator = StockGenerator::new(
+            Side::Buy,
+            base_price - price_step,
+            price_step,
+            orders_count);
+        Sniffer::fixed_amount(
+            sell_stock_generator,
+            buy_stock_generator,
+            100f64)
+    }
+}
+
 pub struct StockGenerator {
     base_price: f64,
     step: f64,

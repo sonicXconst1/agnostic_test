@@ -1,7 +1,5 @@
 use agnostic::market::{Accountant, Sniffer, Trader};
-use agnostic::trading_pair::Side;
 use std::sync::Arc;
-use crate::sniffer::StockGenerator;
 
 pub struct Merchant {
     accountant: std::sync::Arc<dyn agnostic::market::Accountant>,
@@ -13,6 +11,16 @@ impl Merchant {
     pub fn with_sniffer(sniffer: Arc<dyn Sniffer>) -> Merchant {
         let accountant = Arc::new(crate::accountant::Accountant::default());
         let trader = Arc::new(crate::trader::Trader::default());
+        Merchant {
+            sniffer,
+            trader,
+            accountant
+        }
+    }
+
+    pub fn with_trader(trader: Arc<dyn Trader>) -> Merchant {
+        let accountant = Arc::new(crate::accountant::Accountant::default());
+        let sniffer = Arc::new(crate::sniffer::Sniffer::default());
         Merchant {
             sniffer,
             trader,
@@ -35,26 +43,10 @@ impl Merchant {
 
 impl Default for Merchant {
     fn default() -> Self {
-        let base_price = 0.5;
-        let price_step = 0.001;
-        let orders_count = 10;
-        let sell_stock_generator = StockGenerator::new(
-            Side::Sell,
-            base_price + price_step,
-            price_step,
-            orders_count);
-        let buy_stock_generator = StockGenerator::new(
-            Side::Buy,
-            base_price - price_step,
-            price_step,
-            orders_count);
         Merchant {
             accountant: Arc::new(crate::accountant::Accountant::default()),
             trader: Arc::new(crate::trader::Trader::default()),
-            sniffer: Arc::new(crate::sniffer::Sniffer::fixed_amount(
-                    sell_stock_generator,
-                    buy_stock_generator,
-                    100f64))
+            sniffer: Arc::new(crate::sniffer::Sniffer::default()),
         }
     }
 }
