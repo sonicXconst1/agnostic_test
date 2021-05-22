@@ -2,6 +2,10 @@ use agnostic::trade::{Trade, TradeResult};
 use agnostic::order::{Order, OrderWithId};
 use agnostic::market;
 use agnostic::trading_pair::Target;
+use std::sync::{
+    Arc,
+    Mutex
+};
 
 #[derive(Debug, Default)]
 pub struct Trader {
@@ -41,7 +45,9 @@ impl agnostic::market::Trader for Trader {
 #[derive(Default, Debug)]
 pub struct TradesLogger {
     trader: Trader,
-    pub trades: Vec<Trade>
+    pub create_order_log: Arc<Mutex<Vec<Result<Trade, String>>>>,
+    pub delete_order_log: Arc<Mutex<Vec<Result<(), String>>>>,
+
 }
 
 impl TradesLogger {
@@ -51,22 +57,85 @@ impl TradesLogger {
             ..Default::default()
         }
     }
-
-    pub async fn create_order(&mut self, order: Order) {
-    }
 }
 
 impl agnostic::market::Trader for TradesLogger {
     fn create_order(&self, order: Order) -> market::Future<Result<Trade, String>> {
-        let result = self.trader.create_order(order);
-        let result = async move {
-            let s = result.await;
-            s
-        };
-        Box::pin(result)
+        let trade = self.trader.create_order(order);
+        let create_order_log = self.create_order_log.clone();
+        Box::pin(async move {
+            let trade = trade.await;
+            create_order_log.lock().unwrap().push(trade.clone());
+            trade
+        })
     }
 
     fn delete_order(&self, id: &str) -> market::Future<Result<(), String>> {
-        todo!()
+        let delete_future = self.trader.delete_order(id);
+        let delete_order_log = self.delete_order_log.clone();
+        Box::pin(async move {
+            let delete_result = delete_future.await;
+            delete_order_log.lock().unwrap().push(delete_result.clone());
+            delete_result
+        })
+    }
+}
+
+impl From<Trader> for TradesLogger {
+    fn from(trader: Trader) -> Self {
+        TradesLogger {
+            trader,
+            ..Default::default()
+        }
+    }
+}
+
+impl From<TradesLogger> for Trader {
+    fn from(logger: TradesLogger) -> Trader {
+        logger.trader
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use agnostic::trading_pair::{
+        Target,
+        Side,
+        TradingPair,
+        Coins
+    };
+    use agnostic::market::Trader as TraderTrait;
+
+    #[test]
+    fn test_trades_logger() {
+        let trader = TradesLogger::default();
+        let price = 100f64;
+        let amount = 100f64;
+        let order = Order {
+            trading_pair: TradingPair {
+                coins: Coins::TonUsdt,
+                side: Side::Sell,
+                target: Target::Market,
+            },
+            price,
+            amount,
+        };
+        let mut ok_counter = 0;
+        let mut error_counter = 0;
+        for _ in 0..5 {
+            match tokio_test::block_on(trader.create_order(order.clone())) {
+                Ok(_trade) => ok_counter += 1,
+                Err(_error) => error_counter += 1,
+            };
+        }
+        assert_eq!(
+            trader.create_order_log.lock().unwrap().iter().filter(|item| item.is_ok()).count(),
+            ok_counter,
+        );
+        assert_eq!(
+            trader.create_order_log.lock().unwrap().iter().filter(|item| item.is_err()).count(),
+            error_counter,
+        );
     }
 }
