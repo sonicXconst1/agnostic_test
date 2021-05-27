@@ -57,6 +57,16 @@ impl TradesLogger {
             ..Default::default()
         }
     }
+
+    pub fn with_orders(trader: Trader, create_order_results: Vec<Trade>) -> TradesLogger {
+        TradesLogger {
+            trader,
+            create_order_log: Arc::new(Mutex::new(
+                create_order_results.into_iter().map(|item| Ok(item)).collect()
+            )),
+            ..Default::default()
+        }
+    }
 }
 
 impl agnostic::market::Trader for TradesLogger {
