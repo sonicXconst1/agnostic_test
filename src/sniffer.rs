@@ -18,7 +18,7 @@ impl SnifferBuilder {
         Self {
             buy_generator: Some(generator),
             sell_generator: self.sell_generator,
-            my_orders: self.my_orders
+            my_orders: self.my_orders,
         }
     }
 
@@ -38,8 +38,27 @@ impl SnifferBuilder {
         }
     }
 
-    pub fn build(self, base_price: f64, price_step: f64, count: usize, amount: f64) -> Self {
-        unimplemented!()
+    pub fn build(self, amount: f64) -> Sniffer {
+        fn create_default_generator(side: Side) -> StockGenerator {
+            StockGenerator {
+                base_price: 1f64,
+                step: match side {
+                    Side::Sell => 0.1f64,
+                    Side::Buy => -0.1f64,
+                },
+                count: 3, 
+            }
+        }
+        fn create_orders(amount: f64, side: Side, generator: Option<StockGenerator>) -> Vec<Order> {
+            generator
+                .unwrap_or(create_default_generator(side))
+                .generate_orders(amount)
+        }
+        Sniffer {
+            sell_orders: create_orders(amount, Side::Sell, self.sell_generator),
+            buy_orders: create_orders(amount, Side::Buy, self.buy_generator),
+            my_orders: self.my_orders.unwrap_or(Default::default()),
+        }
     }
 }
 
@@ -56,32 +75,11 @@ pub struct OrderWithId {
     pub amount: f64,
 }
 
+#[derive(Default)]
 pub struct Sniffer {
     pub sell_orders: Vec<Order>,
     pub buy_orders: Vec<Order>,
     pub my_orders: Vec<OrderWithId>,
-}
-
-impl Default for Sniffer {
-    fn default() -> Sniffer {
-        let base_price = 0.5;
-        let price_step = 0.001;
-        let orders_count = 10;
-        let sell_stock_generator = StockGenerator::new(
-            Side::Sell,
-            base_price + price_step,
-            price_step,
-            orders_count);
-        let buy_stock_generator = StockGenerator::new(
-            Side::Buy,
-            base_price - price_step,
-            price_step,
-            orders_count);
-        Sniffer::fixed_amount(
-            sell_stock_generator,
-            buy_stock_generator,
-            100f64)
-    }
 }
 
 #[derive(Debug)]
@@ -256,6 +254,9 @@ pub(crate) mod test {
         let all_the_best_orders = sniffer.all_the_best_orders(trading_pair.clone(), count);
         let all_the_best_orders = tokio_test::block_on(all_the_best_orders).unwrap();
         assert_eq!(all_the_best_orders.len(), expected_count);
+        if expected_count == 0 {
+            return;
+        }
         let first_order = all_the_best_orders.first().unwrap();
         assert!(almost_equal(first_order.price, expected_first_price));
         let last_order = all_the_best_orders.last().unwrap();
