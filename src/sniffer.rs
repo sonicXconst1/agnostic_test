@@ -1,14 +1,65 @@
 use agnostic::trading_pair::{Side, Target};
 
+#[derive(Default, Debug)]
+pub struct SnifferBuilder {
+    buy_generator: Option<StockGenerator>,
+    sell_generator: Option<StockGenerator>,
+    my_orders: Option<Vec<OrderWithId>>,
+}
+
+impl SnifferBuilder {
+    pub fn new() -> Self {
+        SnifferBuilder {
+            ..Default::default()
+        }
+    }
+
+    pub fn buy_stock_generator(self, generator: StockGenerator) -> Self {
+        Self {
+            buy_generator: Some(generator),
+            sell_generator: self.sell_generator,
+            my_orders: self.my_orders
+        }
+    }
+
+    pub fn sell_stock_generator(self, generator: StockGenerator) -> Self {
+        Self {
+            buy_generator: self.buy_generator,
+            sell_generator: Some(generator),
+            my_orders: self.my_orders,
+        }
+    }
+
+    pub fn my_orders(self, my_orders: Vec<OrderWithId>) -> Self {
+        Self {
+            buy_generator: self.buy_generator,
+            sell_generator: self.sell_generator,
+            my_orders: Some(my_orders),
+        }
+    }
+
+    pub fn build(self, base_price: f64, price_step: f64, count: usize, amount: f64) -> Self {
+        unimplemented!()
+    }
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct Order {
     pub price: f64,
     pub amount: f64,
 }
 
+#[derive(Clone, PartialEq, Debug)]
+pub struct OrderWithId {
+    pub id: String,
+    pub price: f64,
+    pub amount: f64,
+}
+
 pub struct Sniffer {
     pub sell_orders: Vec<Order>,
-    pub buy_orders: Vec<Order>
+    pub buy_orders: Vec<Order>,
+    pub my_orders: Vec<OrderWithId>,
 }
 
 impl Default for Sniffer {
@@ -33,6 +84,7 @@ impl Default for Sniffer {
     }
 }
 
+#[derive(Debug)]
 pub struct StockGenerator {
     base_price: f64,
     step: f64,
@@ -75,6 +127,7 @@ impl Sniffer {
         Sniffer {
             sell_orders: sell.generate_orders(amount),
             buy_orders: buy.generate_orders(amount),
+            my_orders: Vec::new()
         }
     }
 }
