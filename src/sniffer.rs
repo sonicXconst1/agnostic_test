@@ -1,6 +1,6 @@
 use agnostic::trading_pair::{Side, Target};
 
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct SnifferBuilder {
     buy_generator: Option<StockGenerator>,
     sell_generator: Option<StockGenerator>,
@@ -82,7 +82,7 @@ pub struct Sniffer {
     pub my_orders: Vec<OrderWithId>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StockGenerator {
     base_price: f64,
     step: f64,
