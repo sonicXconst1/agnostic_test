@@ -147,10 +147,19 @@ impl agnostic::market::Sniffer for Sniffer {
 
     fn get_my_orders(
         &self,
-        _trading_pair: agnostic::trading_pair::TradingPair,
+        trading_pair: agnostic::trading_pair::TradingPair,
     ) -> agnostic::market::Future<Result<Vec<agnostic::order::OrderWithId>, String>> {
+        let orders: Vec<_> = self.my_orders
+            .iter()
+            .map(|order| agnostic::order::OrderWithId {
+                id: order.id.clone(),
+                trading_pair: trading_pair.clone(),
+                price: order.price,
+                amount: order.amount,
+            })
+            .collect();
         Box::pin(async move {
-            Ok(Vec::new())
+            Ok(orders)
         })
     }
 }
