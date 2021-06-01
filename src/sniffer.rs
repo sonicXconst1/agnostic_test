@@ -120,16 +120,6 @@ impl StockGenerator {
     }
 }
 
-impl Sniffer {
-    pub fn fixed_amount(sell: StockGenerator, buy: StockGenerator, amount: f64) -> Sniffer {
-        Sniffer {
-            sell_orders: sell.generate_orders(amount),
-            buy_orders: buy.generate_orders(amount),
-            my_orders: Vec::new()
-        }
-    }
-}
-
 impl agnostic::market::Sniffer for Sniffer {
     fn all_the_best_orders(
         &self,
@@ -209,7 +199,11 @@ pub(crate) mod test {
         let amount = 100f64;
         let sell_stock_generator = StockGenerator::new(Side::Sell, base_price, step, count);
         let buy_stock_generator = StockGenerator::new(Side::Buy, base_price, step, count);
-        let sniffer = super::Sniffer::fixed_amount(sell_stock_generator, buy_stock_generator, amount);
+        let sniffer = SnifferBuilder::new()
+            .sell_stock_generator(sell_stock_generator)
+            .buy_stock_generator(buy_stock_generator)
+            .my_orders(Vec::new())
+            .build(amount);
         test_sniffer(&sniffer, base_price, 1.9f64, base_price, 0.1f64, count)
     }
 
