@@ -6,10 +6,15 @@ use std::sync::{
     Arc,
     Mutex
 };
+use rand;
 
 #[derive(Debug, Default)]
 pub struct Trader {
     pub created_orders: Vec<Trade>,
+}
+
+fn get_id() -> String {
+    rand::random::<u32>().to_string()
 }
 
 impl agnostic::market::Trader for Trader {
@@ -18,13 +23,13 @@ impl agnostic::market::Trader for Trader {
             log::debug!("Creating order {:#?}", order);
             match order.trading_pair.target {
                 Target::Market => Ok(Trade::Market(TradeResult {
-                    id: "1337".to_owned(),
+                    id: get_id(),
                     trading_pair: order.trading_pair,
                     price: order.price,
                     amount: order.amount,
                 })),
                 Target::Limit => Ok(Trade::Limit(OrderWithId {
-                    id: "1337".to_owned(),
+                    id: get_id(),
                     trading_pair: order.trading_pair,
                     price: order.price,
                     amount: order.amount,
@@ -35,9 +40,19 @@ impl agnostic::market::Trader for Trader {
 
     fn delete_order(&self, id: &str) -> agnostic::market::Future<Result<(), String>> {
         let id = id.to_owned();
+        let found = self.created_orders.iter()
+            .filter_map(|order| match order {
+                Trade::Limit(order_with_id) => Some(order_with_id),
+                Trade::Market(_) => None,
+            })
+            .find(|order| order.id == id)
+            .is_some();
         Box::pin(async move {
-            log::debug!("Deleting order with id: {:#?}", id);
-            Ok(())
+            if found {
+                Ok(())
+            } else {
+                Err(format!("Failed to find order with id {}", id))
+            }
         })
     }
 }

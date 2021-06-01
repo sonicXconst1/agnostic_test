@@ -11,6 +11,7 @@ hyper = { version = "*", features=["client", "tcp"] }
 log = { version = "0.*" }
 agnostic = { git = "https://github.com/sonicxconst1/agnostic.git", branch = "master" }
 utils = { git = "https://github.com/sonicxconst1/utils.git", branch = "master" }
+rand = { version = "*" }
 
 [dev-dependencies]
 tokio-test = { version = "*" }
