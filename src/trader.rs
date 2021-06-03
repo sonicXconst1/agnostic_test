@@ -47,11 +47,12 @@ impl agnostic::market::Trader for Trader {
             })
             .find(|order| order.id == id)
             .is_some();
+        let orders = self.created_orders.clone();
         Box::pin(async move {
             if found {
                 Ok(())
             } else {
-                Err(format!("Failed to find order with id {}", id))
+                Err(format!("Failed to find order with id {}: {:#?}", id, orders))
             }
         })
     }
