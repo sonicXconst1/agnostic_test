@@ -10,7 +10,6 @@ use rand;
 
 #[derive(Debug, Default)]
 pub struct Trader {
-    pub created_orders: Vec<Trade>,
 }
 
 fn get_id() -> String {
@@ -38,22 +37,9 @@ impl agnostic::market::Trader for Trader {
         })
     }
 
-    fn delete_order(&self, id: &str) -> agnostic::market::Future<Result<(), String>> {
-        let id = id.to_owned();
-        let found = self.created_orders.iter()
-            .filter_map(|order| match order {
-                Trade::Limit(order_with_id) => Some(order_with_id),
-                Trade::Market(_) => None,
-            })
-            .find(|order| order.id == id)
-            .is_some();
-        let orders = self.created_orders.clone();
-        Box::pin(async move {
-            if found {
-                Ok(())
-            } else {
-                Err(format!("Failed to find order with id {}: {:#?}", id, orders))
-            }
+    fn delete_order(&self, _id: &str) -> agnostic::market::Future<Result<(), String>> {
+        Box::pin(async {
+            Ok(())
         })
     }
 }
@@ -97,13 +83,7 @@ impl agnostic::market::Trader for TradesLogger {
     }
 
     fn delete_order(&self, id: &str) -> market::Future<Result<(), String>> {
-        let delete_future = self.trader.delete_order(id);
-        let delete_order_log = self.delete_order_log.clone();
-        Box::pin(async move {
-            let delete_result = delete_future.await;
-            delete_order_log.lock().unwrap().push(delete_result.clone());
-            delete_result
-        })
+        self.trader.delete_order(id)
     }
 }
 
